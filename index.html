@@ -2,11 +2,103 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap">
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
 
   <body>
     <h1>Projet DataViz</h1>
-    <script></script>
-</body>
+    <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h2>
+
+    <div class="selector-container">
+      <label for="genderSelector">Select Gender:</label>
+      <select id="genderSelector">
+        <option value="Men">Men</option>
+        <option value="Women">Women</option>
+      </select>
+    </div>
+
+    <div class="selector-container">
+      <label for="distanceSelector">Select Distance:</label>
+      <select id="distanceSelector">
+        <option value="100">100m</option>
+        <option value="200">200m</option>
+        <option value="400">400m</option>
+        <option value="800">800m</option>
+        <option value="1500">1500m</option>
+        <option value="5000">5000m</option>
+        <option value="10000">10000m</option>
+        <option value="21098">Half Marathon (21098m)</option>
+        <option value="42195">Marathon (42195m)</option>
+      </select>
+    </div>
+
+    <div class="selector-container">
+      <label for="topSelector">Select Rank:</label>
+      <select id="topSelector">
+        <option value="1">Top 1</option>
+        <option value="10">Top 10</option>
+        <option value="100">Top 100</option>
+        <option value="1000">Top 1000</option>
+      </select>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+      d3.csv("data.csv").then(function (data) {
+        // Function to filter data based on gender, distance, and top
+        function filterData(gender, distance, top) {
+          const filteredData = data.filter(
+            (d) => d.Gender === gender && parseInt(d.Distance) === parseInt(distance)
+          );
+
+          switch (top) {
+            case 1:
+              return filteredData.slice(0, 1);
+            case 10:
+              return filteredData.slice(9, 10);
+            case 100:
+              return filteredData.slice(99, 100);
+            case 1000:
+              return [filteredData[filteredData.length - 1]];
+            default:
+              return [];
+          }
+        }
+
+        // Function to update the result on the webpage
+        function updateResult() {
+          const selectedGender = document.getElementById("genderSelector").value;
+          const selectedDistance = document.getElementById("distanceSelector").value;
+          const selectedTop = parseInt(document.getElementById("topSelector").value);
+
+          const filteredData = filterData(selectedGender, selectedDistance, selectedTop);
+
+          const resultDiv = d3.select("#result");
+
+          // Clear previous results
+          resultDiv.selectAll("*").remove();
+
+          // Display the filtered data
+          const resultList = resultDiv.append("ul");
+          const listItems = resultList
+            .selectAll("li")
+            .data(filteredData)
+            .enter()
+            .append("li")
+            .text((d) => `[${d.Date}] ${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s`);
+        }
+
+        // Initial update
+        updateResult();
+
+        // Attach event listeners to selectors
+        d3.select("#genderSelector").on("change", updateResult);
+        d3.select("#distanceSelector").on("change", updateResult);
+        d3.select("#topSelector").on("change", updateResult);
+      });
+    </script>
+  </body>
 </html>
