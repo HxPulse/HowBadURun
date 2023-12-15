@@ -45,6 +45,7 @@
     </div>
 
     <div id="result"></div>
+    <div id="raceContainer"></div>
 
     <script>
       d3.csv("data.csv").then(function (data) {
@@ -68,20 +69,16 @@
           }
         }
 
-        // Function to update the result on the webpage
         function updateResult() {
           const selectedGender = document.getElementById("genderSelector").value;
           const selectedDistance = document.getElementById("distanceSelector").value;
           const selectedTop = parseInt(document.getElementById("topSelector").value);
-
+        
           const filteredData = filterData(selectedGender, selectedDistance, selectedTop);
-
+        
           const resultDiv = d3.select("#result");
-
-          // Clear previous results
           resultDiv.selectAll("*").remove();
 
-          // Display the filtered data
           const resultList = resultDiv.append("ul");
           const listItems = resultList
             .selectAll("li")
@@ -89,12 +86,40 @@
             .enter()
             .append("li")
             .text((d) => `[${d.Date}] ${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s`);
+        
+          const avgSpeedFloat = parseFloat(filteredData[0].AvgSpeed);
+          const svgWidth = window.innerWidth;
+          const svgHeight = 20;
+          const trackRacePadding = 50;
+
+          d3.select("#raceContainer").selectAll("svg").remove();
+        
+          const svg = d3.select("#raceContainer")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+        
+          svg.append("line")
+            .attr("x1", trackRacePadding)
+            .attr("y1", svgHeight / 2)
+            .attr("x2", svgWidth - trackRacePadding)
+            .attr("y2", svgHeight / 2)
+            .attr("stroke", "#000")
+            .attr("stroke-width", 3);
+        
+          const runningIcon = svg.append("image")
+            .attr("xlink:href", "run.png")
+            .attr("width", 25)
+            .attr("height", 25)
+            .attr("x", trackRacePadding);
+        
+          runningIcon.transition()
+            .duration(avgSpeedFloat * 1000)
+            .attr("x", svgWidth - trackRacePadding);
         }
 
-        // Initial update
         updateResult();
 
-        // Attach event listeners to selectors
         d3.select("#genderSelector").on("change", updateResult);
         d3.select("#distanceSelector").on("change", updateResult);
         d3.select("#topSelector").on("change", updateResult);
