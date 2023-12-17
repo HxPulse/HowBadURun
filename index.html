@@ -55,14 +55,9 @@
     </div>
 
     <div id="result"></div>
-<<<<<<< HEAD
     <div id="raceContainer2"></div>
     <div id="raceContainer"></div>
     
-=======
-    <div id="raceContainer"></div>
-    <div id="raceContainer2"></div>
->>>>>>> 7da64b4c855e54daef50f12dfccd76fc5be68b3b
 
     <script>
       Promise.all([
@@ -112,13 +107,9 @@
             .data(filteredData)
             .enter()
             .append("li")
-<<<<<<< HEAD
             .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
             .style("text-align", "center");
 
-=======
-            .text((d) => `[${d.Date}] ${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s`);
->>>>>>> 7da64b4c855e54daef50f12dfccd76fc5be68b3b
 
           const normalPerformance = normalPerformances.find(
             (d) => d.Gender === selectedGender &&
@@ -131,13 +122,8 @@
             const normalDisplaySpeed = delayValue / parseFloat(normalPerformance.AvgSpeed);
             const displaySpeed = delayValue / parseFloat(filteredData[0].AvgSpeed);
             const svgWidth = window.innerWidth;
-<<<<<<< HEAD
             const svgHeight = 30;
             const trackRacePadding = 70;
-=======
-            const svgHeight = 20;
-            const trackRacePadding = 50;
->>>>>>> 7da64b4c855e54daef50f12dfccd76fc5be68b3b
             // Remove existing SVG before appending a new one
             d3.select("#raceContainer").selectAll("svg").remove();
             d3.select("#raceContainer2").selectAll("svg").remove();
@@ -165,17 +151,12 @@
               .attr("y1", svgHeight / 2)
               .attr("x2", svgWidth - trackRacePadding)
               .attr("y2", svgHeight / 2)
-<<<<<<< HEAD
               .attr("stroke", "red")
-=======
-              .attr("stroke", "#000")
->>>>>>> 7da64b4c855e54daef50f12dfccd76fc5be68b3b
               .attr("stroke-width", 3);
 
             // Add the running icon
             const runningIcon = svg.append("image")
               .attr("xlink:href", "run.png")
-<<<<<<< HEAD
               .attr("width", svgHeight + 5)
               .attr("height", svgHeight + 5)
               .attr("x", trackRacePadding);
@@ -184,16 +165,6 @@
               .attr("xlink:href", "run2.png")
               .attr("width", svgHeight + 5)
               .attr("height", svgHeight + 5)
-=======
-              .attr("width", 25)
-              .attr("height", 25)
-              .attr("x", trackRacePadding);
-
-            const runningIcon2 = svg2.append("image")
-              .attr("xlink:href", "run.png")
-              .attr("width", 25)
-              .attr("height", 25)
->>>>>>> 7da64b4c855e54daef50f12dfccd76fc5be68b3b
               .attr("x", trackRacePadding);
 
             runningIcon.transition()
