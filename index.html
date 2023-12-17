@@ -44,14 +44,32 @@
       </select>
     </div>
 
+    <div class="selector-container">
+      <label for="performanceSelector">Select your performance:</label>
+      <select id="performanceSelector">
+        <option value="1">Bad runner</option>
+        <option value="2">Average runner</option>
+        <option value="3">Good runner</option>
+        <option value="4">Excellent runner</option>
+      </select>
+    </div>
+
     <div id="result"></div>
+    <div id="raceContainer2"></div>
+    <div id="raceContainer"></div>
+    
 
     <script>
-      d3.csv("data.csv").then(function (data) {
+      Promise.all([
+        d3.csv("data.csv"),
+        d3.csv("normalPerformances.csv")
+      ]).then(function ([data, normalPerformances]) {
+
         // Function to filter data based on gender, distance, and top
-        function filterData(gender, distance, top) {
+        function filterData(gender, distance, top, performance) {
           const filteredData = data.filter(
-            (d) => d.Gender === gender && parseInt(d.Distance) === parseInt(distance)
+            (d) => d.Gender === gender &&
+              parseInt(d.Distance) === parseInt(distance)
           );
 
           switch (top) {
@@ -73,8 +91,9 @@
           const selectedGender = document.getElementById("genderSelector").value;
           const selectedDistance = document.getElementById("distanceSelector").value;
           const selectedTop = parseInt(document.getElementById("topSelector").value);
+          const selectedPerformance = parseInt(document.getElementById("performanceSelector").value);
 
-          const filteredData = filterData(selectedGender, selectedDistance, selectedTop);
+          const filteredData = filterData(selectedGender, selectedDistance, selectedTop, selectedPerformance);
 
           const resultDiv = d3.select("#result");
 
@@ -88,7 +107,74 @@
             .data(filteredData)
             .enter()
             .append("li")
-            .text((d) => `[${d.Date}] ${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s`);
+            .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
+            .style("text-align", "center");
+
+
+          const normalPerformance = normalPerformances.find(
+            (d) => d.Gender === selectedGender &&
+              parseInt(d.Distance) === parseInt(selectedDistance) &&
+              parseInt(d.Performance) === selectedPerformance
+          );
+
+          if (normalPerformance) {
+            const delayValue = 30000
+            const normalDisplaySpeed = delayValue / parseFloat(normalPerformance.AvgSpeed);
+            const displaySpeed = delayValue / parseFloat(filteredData[0].AvgSpeed);
+            const svgWidth = window.innerWidth;
+            const svgHeight = 30;
+            const trackRacePadding = 70;
+            // Remove existing SVG before appending a new one
+            d3.select("#raceContainer").selectAll("svg").remove();
+            d3.select("#raceContainer2").selectAll("svg").remove();
+
+            const svg = d3.select("#raceContainer")
+              .append("svg")
+              .attr("width", svgWidth)
+              .attr("height", svgHeight);
+
+            const svg2 = d3.select("#raceContainer2")
+              .append("svg")
+              .attr("width", svgWidth)
+              .attr("height", svgHeight);
+
+            svg.append("line")
+              .attr("x1", trackRacePadding)
+              .attr("y1", svgHeight / 2)
+              .attr("x2", svgWidth - trackRacePadding)
+              .attr("y2", svgHeight / 2)
+              .attr("stroke", "#000")
+              .attr("stroke-width", 3);
+
+            svg2.append("line")
+              .attr("x1", trackRacePadding)
+              .attr("y1", svgHeight / 2)
+              .attr("x2", svgWidth - trackRacePadding)
+              .attr("y2", svgHeight / 2)
+              .attr("stroke", "red")
+              .attr("stroke-width", 3);
+
+            // Add the running icon
+            const runningIcon = svg.append("image")
+              .attr("xlink:href", "run.png")
+              .attr("width", svgHeight + 5)
+              .attr("height", svgHeight + 5)
+              .attr("x", trackRacePadding);
+
+            const runningIcon2 = svg2.append("image")
+              .attr("xlink:href", "run2.png")
+              .attr("width", svgHeight + 5)
+              .attr("height", svgHeight + 5)
+              .attr("x", trackRacePadding);
+
+            runningIcon.transition()
+              .duration(displaySpeed)
+              .attr("x", svgWidth - trackRacePadding);
+
+            runningIcon2.transition()
+              .duration(normalDisplaySpeed)
+              .attr("x", svgWidth - trackRacePadding);
+          }
         }
 
         // Initial update
@@ -98,6 +184,7 @@
         d3.select("#genderSelector").on("change", updateResult);
         d3.select("#distanceSelector").on("change", updateResult);
         d3.select("#topSelector").on("change", updateResult);
+        d3.select("#performanceSelector").on("change", updateResult);
       });
     </script>
   </body>
