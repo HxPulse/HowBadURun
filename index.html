@@ -57,7 +57,7 @@
     <div id="result"></div>
     <div id="raceContainer2"></div>
     <div id="raceContainer"></div>
-    
+    <div id="scatterplot"></div> <!-- Scatterplot container -->
 
     <script>
       Promise.all([
@@ -107,7 +107,7 @@
             .data(filteredData)
             .enter()
             .append("li")
-            .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} : ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
+            .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} - ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
             .style("text-align", "center");
 
 
@@ -175,8 +175,83 @@
               .duration(normalDisplaySpeed)
               .attr("x", svgWidth - trackRacePadding);
           }
+
+          // Create scatterplot
+          createScatterplot(selectedGender, selectedDistance);
         }
 
+
+        function createScatterplot(selectedGender, selectedDistance) {
+          const filteredData = data.filter(
+            (d) => d.Gender === selectedGender &&
+              parseInt(d.Distance) === parseInt(selectedDistance)
+          );
+        
+          // Create a nested array grouping data by month and year
+          const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y-%m")(new Date(d.Date)));
+        
+          // Calculate the average time for each month
+          const averagedData = Array.from(nestedData, ([key, values]) => ({
+            Date: key,
+            AvgTimeInS: d3.mean(values, d => parseFloat(d.TimeInS)),
+          }));
+        
+          const scatterplotDiv = d3.select("#scatterplot");
+        
+          // Remove existing scatterplot before appending a new one
+          scatterplotDiv.selectAll("svg").remove();
+        
+          const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+          const width = 800 - margin.left - margin.right; // Adjust width as needed
+          const height = 400 - margin.top - margin.bottom; // Adjust height as needed
+        
+          const xScale = d3.scaleTime()
+            .domain(d3.extent(averagedData, d => new Date(d.Date)))
+            .range([0, width]);
+        
+          const yScale = d3.scaleLinear()
+            .domain([d3.min(averagedData, d => d.AvgTimeInS), d3.max(averagedData, d => d.AvgTimeInS)])
+            .range([height, 0]);
+        
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+        
+          const svg = scatterplotDiv.append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        
+          svg.selectAll("circle")
+            .data(averagedData)
+            .enter().append("circle")
+            .attr("cx", d => xScale(new Date(d.Date)))
+            .attr("cy", d => yScale(d.AvgTimeInS))
+            .attr("r", 5)
+            .attr("fill", "blue");
+        
+          svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+        
+          svg.append("g")
+            .call(yAxis);
+        
+          // Add labels
+          svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top + 20) + ")")
+            .style("text-anchor", "middle")
+            .text("Date");
+        
+          svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Average TimeInS");
+        }
+        
         // Initial update
         updateResult();
 
