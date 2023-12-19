@@ -20,7 +20,7 @@
     </div>
 
     <div class="selector-container">
-      <label for="distanceSelector">Select Distance:</label>
+      <label for="distanceSelector">Distance:</label>
       <select id="distanceSelector">
         <option value="100">100m</option>
         <option value="200">200m</option>
@@ -29,13 +29,13 @@
         <option value="1500">1500m</option>
         <option value="5000">5000m</option>
         <option value="10000">10000m</option>
-        <option value="21098">Half Marathon (21098m)</option>
-        <option value="42195">Marathon (42195m)</option>
+        <option value="21098">Half Marathon (21km)</option>
+        <option value="42195">Marathon (42km)</option>
       </select>
     </div>
 
     <div class="selector-container">
-      <label for="topSelector">Select Rank:</label>
+      <label for="topSelector">Rank:</label>
       <select id="topSelector">
         <option value="1">Top 1</option>
         <option value="10">Top 10</option>
@@ -45,7 +45,7 @@
     </div>
 
     <div class="selector-container">
-      <label for="performanceSelector">Select your performance:</label>
+      <label for="performanceSelector">Your performance:</label>
       <select id="performanceSelector">
         <option value="1">Bad runner</option>
         <option value="2">Average runner</option>
@@ -57,21 +57,29 @@
     <div id="result"></div>
     <div id="raceContainer2"></div>
     <div id="raceContainer"></div>
-    <div id="scatterplot"></div> <!-- Scatterplot container -->
+    <hr style="margin-top: 20px; margin-bottom: 20px;">
+    <h3 style="text-align: center;">Evolution of 
+      <span id="txtGender" style="font-weight: bold;"></span> 
+      <span id="txtDistance" style="font-weight: bold;"></span> 
+      over time
+    </h2>
+    <div id="scatterplot"></div> 
 
     <script>
+      // Load des données
       Promise.all([
         d3.csv("data.csv"),
         d3.csv("normalPerformances.csv")
       ]).then(function ([data, normalPerformances]) {
 
-        // Function to filter data based on gender, distance, and top
+        // Filtrage sur les selectors
         function filterData(gender, distance, top, performance) {
           const filteredData = data.filter(
             (d) => d.Gender === gender &&
               parseInt(d.Distance) === parseInt(distance)
           );
-
+          
+          // Filtrage sur la sélection de top
           switch (top) {
             case 1:
               return filteredData.slice(0, 1);
@@ -86,21 +94,18 @@
           }
         }
 
-        // Function to update the result on the webpage
         function updateResult() {
+          // Données des différents selectors
           const selectedGender = document.getElementById("genderSelector").value;
           const selectedDistance = document.getElementById("distanceSelector").value;
           const selectedTop = parseInt(document.getElementById("topSelector").value);
           const selectedPerformance = parseInt(document.getElementById("performanceSelector").value);
-
           const filteredData = filterData(selectedGender, selectedDistance, selectedTop, selectedPerformance);
 
+          // Message "Your performance vs X"
           const resultDiv = d3.select("#result");
-
-          // Clear previous results
+          // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
           resultDiv.selectAll("*").remove();
-
-          // Display the filtered data
           const resultList = resultDiv.append("ul");
           const listItems = resultList
             .selectAll("li")
@@ -110,34 +115,37 @@
             .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} - ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
             .style("text-align", "center");
 
-
+          // Recherche dans le 2eme csv des performances Bad/Average/Good/Excellent runner
           const normalPerformance = normalPerformances.find(
             (d) => d.Gender === selectedGender &&
               parseInt(d.Distance) === parseInt(selectedDistance) &&
               parseInt(d.Performance) === selectedPerformance
           );
 
+          // Ici on s'occupe des 2 tracks
           if (normalPerformance) {
+            // Valeurs de délai pour ralentir l'animation de course
             const delayValue = 30000
             const normalDisplaySpeed = delayValue / parseFloat(normalPerformance.AvgSpeed);
             const displaySpeed = delayValue / parseFloat(filteredData[0].AvgSpeed);
-            const svgWidth = window.innerWidth;
+            // Taille des tracks
+            const svgWidth = window.innerWidth - 100;
             const svgHeight = 30;
             const trackRacePadding = 70;
-            // Remove existing SVG before appending a new one
+
+            // Suppression des éléments à chaque mise à jour pour éviter de dupliquer à l'infini
             d3.select("#raceContainer").selectAll("svg").remove();
             d3.select("#raceContainer2").selectAll("svg").remove();
 
+            // Track 1 et 2
             const svg = d3.select("#raceContainer")
               .append("svg")
               .attr("width", svgWidth)
               .attr("height", svgHeight);
-
             const svg2 = d3.select("#raceContainer2")
               .append("svg")
               .attr("width", svgWidth)
               .attr("height", svgHeight);
-
             svg.append("line")
               .attr("x1", trackRacePadding)
               .attr("y1", svgHeight / 2)
@@ -145,7 +153,6 @@
               .attr("y2", svgHeight / 2)
               .attr("stroke", "#000")
               .attr("stroke-width", 3);
-
             svg2.append("line")
               .attr("x1", trackRacePadding)
               .attr("y1", svgHeight / 2)
@@ -154,29 +161,24 @@
               .attr("stroke", "red")
               .attr("stroke-width", 3);
 
-            // Add the running icon
+            // Icones 1 et 2
             const runningIcon = svg.append("image")
               .attr("xlink:href", "run.png")
               .attr("width", svgHeight + 5)
               .attr("height", svgHeight + 5)
               .attr("x", trackRacePadding);
-
             const runningIcon2 = svg2.append("image")
               .attr("xlink:href", "run2.png")
               .attr("width", svgHeight + 5)
               .attr("height", svgHeight + 5)
               .attr("x", trackRacePadding);
-
             runningIcon.transition()
               .duration(displaySpeed)
               .attr("x", svgWidth - trackRacePadding);
-
             runningIcon2.transition()
               .duration(normalDisplaySpeed)
               .attr("x", svgWidth - trackRacePadding);
           }
-
-          // Create scatterplot
           createScatterplot(selectedGender, selectedDistance);
         }
 
@@ -186,76 +188,98 @@
             (d) => d.Gender === selectedGender &&
               parseInt(d.Distance) === parseInt(selectedDistance)
           );
-        
-          // Create a nested array grouping data by month and year
+
+          // Récupération des données pour le title
+          const selectedDistanceOption = document.getElementById("distanceSelector");
+          d3.select("#txtGender").text(selectedGender);
+          d3.select("#txtDistance").text(selectedDistanceOption.options[selectedDistanceOption.selectedIndex].text);
+          
+          // On récupère les données par mois
           const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y-%m")(new Date(d.Date)));
-        
-          // Calculate the average time for each month
-          const averagedData = Array.from(nestedData, ([key, values]) => ({
-            Date: key,
-            AvgTimeInS: d3.mean(values, d => parseFloat(d.TimeInS)),
-          }));
+          // Et on récupère le meilleur temps par mois
+          const bestTimesData = Array.from(nestedData, ([key, values]) => {
+            const bestTime = d3.min(values, d => parseFloat(d.TimeInS));
+            const bestTimeEntry = values.find(d => parseFloat(d.TimeInS) === bestTime);
+            return {
+              Date: key,
+              BestTimeInS: bestTime,
+              BestTimeEntry: bestTimeEntry,
+            };
+          });
         
           const scatterplotDiv = d3.select("#scatterplot");
-        
-          // Remove existing scatterplot before appending a new one
+          // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
           scatterplotDiv.selectAll("svg").remove();
-        
-          const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-          const width = 800 - margin.left - margin.right; // Adjust width as needed
-          const height = 400 - margin.top - margin.bottom; // Adjust height as needed
-        
+          // Tailles du scatterplot
+          const margin = { top: 40, right: 20, bottom: 60, left: 60 }; 
+          const width = 800 - margin.left - margin.right; 
+          const height = 500 - margin.top - margin.bottom; 
+
+          // Scaling
           const xScale = d3.scaleTime()
-            .domain(d3.extent(averagedData, d => new Date(d.Date)))
+            .domain(d3.extent(bestTimesData, d => new Date(d.Date)))
             .range([0, width]);
-        
           const yScale = d3.scaleLinear()
-            .domain([d3.min(averagedData, d => d.AvgTimeInS), d3.max(averagedData, d => d.AvgTimeInS)])
+            .domain([d3.min(bestTimesData, d => d.BestTimeInS), d3.max(bestTimesData, d => d.BestTimeInS)])
             .range([height, 0]);
-        
           const xAxis = d3.axisBottom(xScale);
           const yAxis = d3.axisLeft(yScale);
-        
           const svg = scatterplotDiv.append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        
+          
+          // Tooltip
+          const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+          // Sur les cercles
           svg.selectAll("circle")
-            .data(averagedData)
+            .data(bestTimesData)
             .enter().append("circle")
             .attr("cx", d => xScale(new Date(d.Date)))
-            .attr("cy", d => yScale(d.AvgTimeInS))
+            .attr("cy", d => yScale(d.BestTimeInS))
             .attr("r", 5)
-            .attr("fill", "blue");
+            .attr("fill", "blue")
+            .on("mouseover", function (event, d) {
+              tooltip.transition()
+                .duration(150)
+                .style("opacity", .9)
+                .style("left", (event.pageX + 10) + "px")  
+                .style("top", (event.pageY - 18) + "px"); 
         
+              tooltip.html(`${d.BestTimeEntry.Name}<br>${d.BestTimeEntry.TimeInS}s - ${d.BestTimeEntry.AvgSpeed}m/s [${d.BestTimeEntry.Date}]`);
+            })
+            .on("mouseout", function (d) {
+              tooltip.transition()
+                .duration(350)
+                .style("opacity", 0);
+          });
+
           svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
-        
           svg.append("g")
             .call(yAxis);
-        
-          // Add labels
+
+          // Labels sur les axes
           svg.append("text")
-            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top + 20) + ")")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top) + ")") 
             .style("text-anchor", "middle")
             .text("Date");
-        
           svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0 - margin.left)
             .attr("x", 0 - (height / 2))
-            .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text("Average TimeInS");
+            .text("Time (s)")
+            .attr("y", -40);
         }
         
         // Initial update
         updateResult();
 
-        // Attach event listeners to selectors
+        // Event listeners
         d3.select("#genderSelector").on("change", updateResult);
         d3.select("#distanceSelector").on("change", updateResult);
         d3.select("#topSelector").on("change", updateResult);

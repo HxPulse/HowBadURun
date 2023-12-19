@@ -15,13 +15,23 @@ body::before {
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  opacity: 0.5;
+  opacity: 0.4;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   z-index: -1; 
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 8px;
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
 }
 
 h1 {
