@@ -10,54 +10,60 @@
   <body>
     <h1>Projet DataViz</h1>
     <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h2>
+      
+    <div class="selectors">
+      <div class="selectors-left">
+        <div class="selector-container">
+          <label for="genderSelector">Select Gender:</label>
+          <select id="genderSelector">
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+          </select>
+        </div>
 
-    <div class="selector-container">
-      <label for="genderSelector">Select Gender:</label>
-      <select id="genderSelector">
-        <option value="Men">Men</option>
-        <option value="Women">Women</option>
-      </select>
+        <div class="selector-container">
+          <label for="distanceSelector">Distance:</label>
+          <select id="distanceSelector">
+            <option value="100">100m</option>
+            <option value="200">200m</option>
+            <option value="400">400m</option>
+            <option value="800">800m</option>
+            <option value="1500">1500m</option>
+            <option value="5000">5000m</option>
+            <option value="10000">10000m</option>
+            <option value="21098">Half Marathon (21km)</option>
+            <option value="42195">Marathon (42km)</option>
+          </select>
+        </div>
+
+        <div class="selector-container">
+          <label for="topSelector">Rank:</label>
+          <select id="topSelector">
+            <option value="1">Top 1</option>
+            <option value="10">Top 10</option>
+            <option value="100">Top 100</option>
+            <option value="1000">Top 1000</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="selectors-right">
+        <div class="selector-container">
+          <label for="performanceSelector">Your performance:</label>
+          <select id="performanceSelector">
+            <option value="1">Bad runner</option>
+            <option value="2">Average runner</option>
+            <option value="3">Good runner</option>
+            <option value="4">Excellent runner</option>
+          </select>
+        </div>
+
+        <div id="result"></div>
+      </div>
     </div>
 
-    <div class="selector-container">
-      <label for="distanceSelector">Distance:</label>
-      <select id="distanceSelector">
-        <option value="100">100m</option>
-        <option value="200">200m</option>
-        <option value="400">400m</option>
-        <option value="800">800m</option>
-        <option value="1500">1500m</option>
-        <option value="5000">5000m</option>
-        <option value="10000">10000m</option>
-        <option value="21098">Half Marathon (21km)</option>
-        <option value="42195">Marathon (42km)</option>
-      </select>
-    </div>
-
-    <div class="selector-container">
-      <label for="topSelector">Rank:</label>
-      <select id="topSelector">
-        <option value="1">Top 1</option>
-        <option value="10">Top 10</option>
-        <option value="100">Top 100</option>
-        <option value="1000">Top 1000</option>
-      </select>
-    </div>
-
-    <div class="selector-container">
-      <label for="performanceSelector">Your performance:</label>
-      <select id="performanceSelector">
-        <option value="1">Bad runner</option>
-        <option value="2">Average runner</option>
-        <option value="3">Good runner</option>
-        <option value="4">Excellent runner</option>
-      </select>
-    </div>
-
-    <div id="result"></div>
     <div id="raceContainer2"></div>
     <div id="raceContainer"></div>
-    <hr style="margin-top: 20px; margin-bottom: 20px;">
     <h3 style="text-align: center;">Evolution of 
       <span id="txtGender" style="font-weight: bold;"></span> 
       <span id="txtDistance" style="font-weight: bold;"></span> 
@@ -241,7 +247,7 @@
             .attr("cx", d => xScale(new Date(d.Date)))
             .attr("cy", d => yScale(d.BestTimeInS))
             .attr("r", 5)
-            .attr("fill", "blue")
+            .attr("fill", "#2978A0")
             .on("mouseover", function (event, d) {
               tooltip.transition()
                 .duration(150)
