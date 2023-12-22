@@ -10,33 +10,56 @@ body {
   position: relative; 
 }
 
+.selector-container {
+  display: flex;
+  flex-direction: row;
+  margin: 10px;
+}
+
 .selectors {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  gap: 20px; /* Space between columns */
+  grid-template-columns: 1fr 1fr; 
+  gap: 20px; 
   width: 99%;
   justify-content: center;
   align-items: start;
-  padding: 10px; /* Padding around the entire selectors area */
+  padding: 10px; 
 }
 
 .selectors-left, .selectors-right {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center align the flex items */
-  border: 2px solid #2978A0; /* Border around both left and right selectors */
-  padding: 20px; /* Padding inside the selectors */
-  width: 80%; /* Increase the width */
-  margin: 0 auto; /* Center the selectors-left and selectors-right */
+  align-items: center; 
+  border: 2px solid #2978A0; 
+  padding: 20px; 
+  width: 80%; 
+  margin: 0 auto; 
 }
 
 .selector-container {
-  width: 100%; /* Ensure selector containers take full width */
-  justify-content: center; /* Center align selector containers */
+  width: 100%; 
+  justify-content: center; 
   display: flex;
 }
 
-/* Rest of your CSS remains the same */
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+#icon1, #icon2 {
+  animation-name: spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  width: 60px; /* Adjust width as needed */
+  height: 60px;
+}
+
+#speedIcons {
+  display: flex;
+  justify-content: center;
+  margin: 30px;
+  gap: 30px;
+}
 
 .tooltip {
   position: absolute;
@@ -51,12 +74,6 @@ body {
 h1 {
   text-decoration: underline;
   margin-top: 20px; 
-}
-
-.selector-container {
-  display: flex;
-  flex-direction: row;
-  margin: 10px;
 }
 
 label {

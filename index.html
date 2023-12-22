@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap">
+    <link rel="icon" href="favicon.png" type="image/png">
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
 
   <body>
     <h1>Projet DataViz</h1>
-    <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h2>
+    <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h3>
       
     <div class="selectors">
       <div class="selectors-left">
@@ -64,11 +65,41 @@
 
     <div id="raceContainer2"></div>
     <div id="raceContainer"></div>
-    <h3 style="text-align: center;">Evolution of 
+
+    <h2>Explore other ways to visualize the gap to the Elite Team</h2>
+    <div class="selectors">
+      <div class="selectors-left">
+        <h3>These gears reflect the relative pace: the faster the spin, the quicker the pace.</h3>
+        <h3 style="margin-top: 0px;">Compare your performance speed (left) to a professional's (right)</h3>
+        <div id="speedIcons">
+          <img id="icon1" src="gear.png" alt="Speed Icon 1">
+          <img id="icon2" src="gear.png" alt="Speed Icon 2">
+        </div>
+      </div>
+      <div class="selectors-right">Work In Progress
+        <div class="selector-container">
+          <label for="countrySelector">Select a country:</label>
+          <select id="countrySelector">
+            <option value="4476">United States (LA NY)</option>
+            <option value="935">France (Marseille Lille)</option>
+            <option value="2157">China (Beijing HK)</option>
+            <option value="499">Japan (Tokyo Osaka)</option>
+            <option value="778">Germany (Hamburg Munich)</option>
+            <option value="1776">Australia (Brisbane Melbourne)</option>
+          </select>
+        </div>
+        <div id="resultCountry"></div>
+      </div>
+    </div>
+    
+
+
+    <h3 style="text-align: center; margin-bottom: 5px;">Evolution of 
       <span id="txtGender" style="font-weight: bold;"></span> 
       <span id="txtDistance" style="font-weight: bold;"></span> 
       over time
-    </h2>
+    </h3>
+    <h4 style="margin-top: 0px;">hover for more info</h4>
     <div id="scatterplot"></div> 
 
     <script>
@@ -110,6 +141,10 @@
 
           // Message "Your performance vs X"
           const resultDiv = d3.select("#result");
+
+          // Message "How long in a country"
+          const resultCountry = d3.select("#resultCountry");
+
           // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
           resultDiv.selectAll("*").remove();
           const resultList = resultDiv.append("ul");
@@ -121,6 +156,16 @@
             .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} - ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
             .style("text-align", "center");
 
+          resultCountry.selectAll("*").remove();
+          const resultList2 = resultCountry.append("ul");
+          const listItems2 = resultList2
+            .selectAll("li")
+            .data(filteredData)
+            .enter()
+            .append("li")
+            .html((d) => `${d.Name} would run XXX1 in XXX2, you would in XXX3`)
+            .style("text-align", "center");
+
           // Recherche dans le 2eme csv des performances Bad/Average/Good/Excellent runner
           const normalPerformance = normalPerformances.find(
             (d) => d.Gender === selectedGender &&
@@ -128,66 +173,72 @@
               parseInt(d.Performance) === selectedPerformance
           );
 
-          // Ici on s'occupe des 2 tracks
-          if (normalPerformance) {
-            // Valeurs de délai pour ralentir l'animation de course
-            const delayValue = 30000
-            const normalDisplaySpeed = delayValue / parseFloat(normalPerformance.AvgSpeed);
-            const displaySpeed = delayValue / parseFloat(filteredData[0].AvgSpeed);
-            // Taille des tracks
-            const svgWidth = window.innerWidth - 100;
-            const svgHeight = 30;
-            const trackRacePadding = 70;
+          // Valeurs de délai pour ralentir l'animation de course et de Rotation des gears
+          const delayValue = 30000
+          const runningSpeedNormal = delayValue / parseFloat(normalPerformance.AvgSpeed);
+          const runningSpeedPro = delayValue / parseFloat(filteredData[0].AvgSpeed);
+          const spinningSpeedNormal = 1/normalPerformance.AvgSpeed * delayValue / 7000; // 1/normalPerformance.AvgSpeed * delayValue / X -> X augmente implique spinning plus rapide
+          const spinningSpeedPro = 1/filteredData[0].AvgSpeed * delayValue / 7000;
+          // Taille des tracks
+          const svgWidth = window.innerWidth - 100;
+          const svgHeight = 30;
+          const trackRacePadding = 70;
 
-            // Suppression des éléments à chaque mise à jour pour éviter de dupliquer à l'infini
-            d3.select("#raceContainer").selectAll("svg").remove();
-            d3.select("#raceContainer2").selectAll("svg").remove();
+          // Suppression des éléments à chaque mise à jour pour éviter de dupliquer à l'infini
+          d3.select("#raceContainer").selectAll("svg").remove();
+          d3.select("#raceContainer2").selectAll("svg").remove();
 
-            // Track 1 et 2
-            const svg = d3.select("#raceContainer")
-              .append("svg")
-              .attr("width", svgWidth)
-              .attr("height", svgHeight);
-            const svg2 = d3.select("#raceContainer2")
-              .append("svg")
-              .attr("width", svgWidth)
-              .attr("height", svgHeight);
-            svg.append("line")
-              .attr("x1", trackRacePadding)
-              .attr("y1", svgHeight / 2)
-              .attr("x2", svgWidth - trackRacePadding)
-              .attr("y2", svgHeight / 2)
-              .attr("stroke", "#000")
-              .attr("stroke-width", 3);
-            svg2.append("line")
-              .attr("x1", trackRacePadding)
-              .attr("y1", svgHeight / 2)
-              .attr("x2", svgWidth - trackRacePadding)
-              .attr("y2", svgHeight / 2)
-              .attr("stroke", "red")
-              .attr("stroke-width", 3);
+          // Track 1 et 2
+          const svg = d3.select("#raceContainer")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+          const svg2 = d3.select("#raceContainer2")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+          svg.append("line")
+            .attr("x1", trackRacePadding)
+            .attr("y1", svgHeight / 2)
+            .attr("x2", svgWidth - trackRacePadding)
+            .attr("y2", svgHeight / 2)
+            .attr("stroke", "#000")
+            .attr("stroke-width", 3);
+          svg2.append("line")
+            .attr("x1", trackRacePadding)
+            .attr("y1", svgHeight / 2)
+            .attr("x2", svgWidth - trackRacePadding)
+            .attr("y2", svgHeight / 2)
+            .attr("stroke", "red")
+            .attr("stroke-width", 3);
 
-            // Icones 1 et 2
-            const runningIcon = svg.append("image")
-              .attr("xlink:href", "run.png")
-              .attr("width", svgHeight + 5)
-              .attr("height", svgHeight + 5)
-              .attr("x", trackRacePadding);
-            const runningIcon2 = svg2.append("image")
-              .attr("xlink:href", "run2.png")
-              .attr("width", svgHeight + 5)
-              .attr("height", svgHeight + 5)
-              .attr("x", trackRacePadding);
-            runningIcon.transition()
-              .duration(displaySpeed)
-              .attr("x", svgWidth - trackRacePadding);
-            runningIcon2.transition()
-              .duration(normalDisplaySpeed)
-              .attr("x", svgWidth - trackRacePadding);
-          }
-          createScatterplot(selectedGender, selectedDistance);
+          // Icones 1 et 2
+          const runningIcon = svg.append("image")
+            .attr("xlink:href", "run.png")
+            .attr("width", svgHeight + 5)
+            .attr("height", svgHeight + 5)
+            .attr("x", trackRacePadding);
+          const runningIcon2 = svg2.append("image")
+            .attr("xlink:href", "run2.png")
+            .attr("width", svgHeight + 5)
+            .attr("height", svgHeight + 5)
+            .attr("x", trackRacePadding);
+          runningIcon.transition()
+            .duration(runningSpeedPro)
+            .attr("x", svgWidth - trackRacePadding);
+          runningIcon2.transition()
+            .duration(runningSpeedNormal)
+            .attr("x", svgWidth - trackRacePadding);
+        
+        updateIconSpeed(spinningSpeedNormal, spinningSpeedPro);
+        createScatterplot(selectedGender, selectedDistance);
         }
 
+        function updateIconSpeed(speed1, speed2) {
+          document.getElementById('icon1').style.animationDuration = `${speed1}s`;
+          document.getElementById('icon2').style.animationDuration = `${speed2}s`;
+        }
+      
 
         function createScatterplot(selectedGender, selectedDistance) {
           const filteredData = data.filter(
