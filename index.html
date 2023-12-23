@@ -9,7 +9,7 @@
   </head>
 
   <body>
-    <h1>Projet DataViz</h1>
+    <img src="title.png" alt="Projet DataViz" id="mainTitleImage">
     <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h3>
       
     <div class="selectors">
@@ -69,23 +69,24 @@
     <h2>Explore other ways to visualize the gap to the Elite Team</h2>
     <div class="selectors">
       <div class="selectors-left">
-        <h3>These gears reflect the relative pace: the faster the spin, the quicker the pace.</h3>
+        <h3>These gears reflect the relative pace: the faster the spin, the quicker you run.</h3>
         <h3 style="margin-top: 0px;">Compare your performance speed (left) to a professional's (right)</h3>
         <div id="speedIcons">
           <img id="icon1" src="gear.png" alt="Speed Icon 1">
           <img id="icon2" src="gear.png" alt="Speed Icon 2">
         </div>
       </div>
-      <div class="selectors-right">Work In Progress
+      <div class="selectors-right">
+        <h3>What would it be on a (very) long run ?</h3>
         <div class="selector-container">
-          <label for="countrySelector">Select a country:</label>
+          <label for="countrySelector">Select a trip:</label>
           <select id="countrySelector">
-            <option value="4476">United States (LA NY)</option>
-            <option value="935">France (Marseille Lille)</option>
-            <option value="2157">China (Beijing HK)</option>
-            <option value="499">Japan (Tokyo Osaka)</option>
-            <option value="778">Germany (Hamburg Munich)</option>
-            <option value="1776">Australia (Brisbane Melbourne)</option>
+            <option value="4476">Los Angeles - New York (United States)</option>
+            <option value="935">Marseille - Lille (France)</option>
+            <option value="2157">Beijing - Hong Kong (China)</option>
+            <option value="499">Tokyo - Osaka (Japan)</option>
+            <option value="778">Hamburg - Munich (Germany)</option>
+            <option value="1776">Brisbane - Melbourne (Australia)</option>
           </select>
         </div>
         <div id="resultCountry"></div>
@@ -138,6 +139,21 @@
           const selectedTop = parseInt(document.getElementById("topSelector").value);
           const selectedPerformance = parseInt(document.getElementById("performanceSelector").value);
           const filteredData = filterData(selectedGender, selectedDistance, selectedTop, selectedPerformance);
+          const selectedDistanceOptions = document.getElementById("distanceSelector");
+          const selectedDistanceTitle = selectedDistanceOptions.options[selectedDistanceOptions.selectedIndex].text;
+
+          // Recherche dans le 2eme csv des performances Bad/Average/Good/Excellent runner
+          const normalPerformance = normalPerformances.find(
+            (d) => d.Gender === selectedGender &&
+              parseInt(d.Distance) === parseInt(selectedDistance) &&
+              parseInt(d.Performance) === selectedPerformance
+          );
+
+          const selectedCountryDistance = parseInt(document.getElementById("countrySelector").value);
+          const selectedCountryOptions = document.getElementById("countrySelector");
+          const selectedCountry = selectedCountryOptions.options[selectedCountryOptions.selectedIndex].text;
+          const timeElite = formatTime(selectedCountryDistance / (parseFloat(filteredData[0].AvgSpeed) * 3.6));
+          const timeAverage = formatTime(selectedCountryDistance / (parseFloat(normalPerformance.AvgSpeed) * 3.6)); 
 
           // Message "Your performance vs X"
           const resultDiv = d3.select("#result");
@@ -156,22 +172,16 @@
             .html((d) => `Your performance (red track)<br><strong>VS</strong><br>${d.Name} - ${d.TimeInS}s - ${d.AvgSpeed}m/s [${d.Date}]`)
             .style("text-align", "center");
 
+        
           resultCountry.selectAll("*").remove();
           const resultList2 = resultCountry.append("ul");
-          const listItems2 = resultList2
-            .selectAll("li")
-            .data(filteredData)
-            .enter()
-            .append("li")
-            .html((d) => `${d.Name} would run XXX1 in XXX2, you would in XXX3`)
+          resultList2.append("li")
+            .html(`Distance of the selected trip : ${selectedCountryDistance}km`)
             .style("text-align", "center");
-
-          // Recherche dans le 2eme csv des performances Bad/Average/Good/Excellent runner
-          const normalPerformance = normalPerformances.find(
-            (d) => d.Gender === selectedGender &&
-              parseInt(d.Distance) === parseInt(selectedDistance) &&
-              parseInt(d.Performance) === selectedPerformance
-          );
+          resultList2.append("li")
+            .html(`With their ${selectedDistanceTitle} pace, ${filteredData[0].Name} would run ${selectedCountry} in ${timeElite}, you would in ${timeAverage}`)
+            .style("text-align", "center");
+            
 
           // Valeurs de délai pour ralentir l'animation de course et de Rotation des gears
           const delayValue = 30000
@@ -187,6 +197,7 @@
           // Suppression des éléments à chaque mise à jour pour éviter de dupliquer à l'infini
           d3.select("#raceContainer").selectAll("svg").remove();
           d3.select("#raceContainer2").selectAll("svg").remove();
+          
 
           // Track 1 et 2
           const svg = d3.select("#raceContainer")
@@ -231,6 +242,9 @@
             .attr("x", svgWidth - trackRacePadding);
         
         updateIconSpeed(spinningSpeedNormal, spinningSpeedPro);
+
+        d3.select("#txtGender").text(selectedGender);
+        d3.select("#txtDistance").text(selectedDistanceTitle);
         createScatterplot(selectedGender, selectedDistance);
         }
 
@@ -238,18 +252,35 @@
           document.getElementById('icon1').style.animationDuration = `${speed1}s`;
           document.getElementById('icon2').style.animationDuration = `${speed2}s`;
         }
-      
 
+        function formatTime(h) {
+          const totalMinutes = h * 60;
+          const days = Math.floor(totalMinutes / 1440);
+          const remainingMinutes = totalMinutes % 1440;
+          const hours = Math.floor(remainingMinutes / 60);
+          const minutes = Math.round(remainingMinutes % 60);
+        
+          let formattedTime = '';
+          if (days > 0) {
+            formattedTime += `${days}d `;
+          }
+          if (hours > 0) {
+            formattedTime += `${hours}h `;
+          }
+          if (minutes > 0) {
+            formattedTime += `${minutes}min`;
+          }
+        
+          return formattedTime.trim();
+        }
+        
+        
+      
         function createScatterplot(selectedGender, selectedDistance) {
           const filteredData = data.filter(
             (d) => d.Gender === selectedGender &&
               parseInt(d.Distance) === parseInt(selectedDistance)
           );
-
-          // Récupération des données pour le title
-          const selectedDistanceOption = document.getElementById("distanceSelector");
-          d3.select("#txtGender").text(selectedGender);
-          d3.select("#txtDistance").text(selectedDistanceOption.options[selectedDistanceOption.selectedIndex].text);
           
           // On récupère les données par mois
           const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y-%m")(new Date(d.Date)));
@@ -341,6 +372,7 @@
         d3.select("#distanceSelector").on("change", updateResult);
         d3.select("#topSelector").on("change", updateResult);
         d3.select("#performanceSelector").on("change", updateResult);
+        d3.select("#countrySelector").on("change", updateResult);
       });
     </script>
   </body>
