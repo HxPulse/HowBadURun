@@ -108,6 +108,11 @@
         <div id="runnerDisplay">Start by selecting a runner</div><br/>
         <input type="text" id="runnerSearch" placeholder="Search Runner">
         <div id="searchResults"></div>
+        <div id="runnerStats">
+          <select id="distanceSelection" style="display: none;"></select>
+          <br/>
+          <div id="performanceStats"></div>
+      </div>
       </div>
     </div>
 
@@ -298,23 +303,71 @@
           return formattedTime.trim();
         }
         
-        function displaySearchResults(runners) {
-          const resultsDiv = document.getElementById("searchResults");
-          const runnerDisplay = document.getElementById("runnerDisplay")
-          resultsDiv.innerHTML = ''; 
-        
-          runners.forEach(runner => {
-            const elem = document.createElement("div");
-            elem.textContent = runner.Name;
-            elem.classList.add('search-result-item');
-            elem.onclick = function() {
-              document.getElementById("runnerSearch").value = runner.Name;
-              runnerDisplay.innerHTML = `Selected Runner: ${runner.Name}`;
-              resultsDiv.innerHTML = "";
-            };
-            resultsDiv.appendChild(elem);
+        function displayRunnerStats(runnerName) {
+          const distanceSelection = document.getElementById("distanceSelection");
+          distanceSelection.innerHTML = '';
+          distanceSelection.style.display = 'block';
+      
+          // Filter the data for the selected runner
+          const runnerData = data.filter(entry => entry.Name === runnerName);
+      
+          // Get unique distances
+          const uniqueDistances = Array.from(new Set(runnerData.map(entry => entry.Distance)));
+      
+          // Populate the distance select box
+          uniqueDistances.forEach(distance => {
+              const option = document.createElement('option');
+              option.value = distance;
+              option.textContent = distance + 'm';
+              distanceSelection.appendChild(option);
           });
-        }
+      
+          // If only one distance, display stats immediately
+          if (uniqueDistances.length === 1) {
+              displayPerformanceStats(runnerName, uniqueDistances[0]);
+          } else {
+              distanceSelection.onchange = () => displayPerformanceStats(runnerName, distanceSelection.value);
+          }
+      }
+      
+      
+      function displayPerformanceStats(runnerName, distance) {
+          const performanceStatsDiv = document.getElementById("performanceStats");
+          performanceStatsDiv.innerHTML = '';
+      
+          // Filter the data for the selected runner and distance
+          const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
+      
+          // Calculate average speed
+          const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
+          const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
+      
+          // Display stats
+          performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
+      }
+      
+      // Rest of your existing JavaScript code...
+      
+      
+      function displaySearchResults(runners) {
+          const resultsDiv = document.getElementById("searchResults");
+          const runnerDisplay = document.getElementById("runnerDisplay");
+          resultsDiv.innerHTML = ''; 
+      
+          runners.forEach(runner => {
+              const elem = document.createElement("div");
+              elem.textContent = runner.Name;
+              elem.classList.add('search-result-item');
+              elem.onclick = function() {
+                  document.getElementById("runnerSearch").value = runner.Name;
+                  runnerDisplay.innerHTML = `Selected Runner: ${runner.Name}`;
+                  resultsDiv.innerHTML = "";
+                  displayRunnerStats(runner.Name);
+              };
+              resultsDiv.appendChild(elem);
+          });
+      }
+      
         
       
         function createScatterplot(selectedGender, selectedDistance) {
@@ -324,7 +377,7 @@
           );
           
           // On récupère les données par mois
-          const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y-%m")(new Date(d.Date)));
+          const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y")(new Date(d.Date)));
           // Et on récupère le meilleur temps par mois
           const bestTimesData = Array.from(nestedData, ([key, values]) => {
             const bestTime = d3.min(values, d => parseFloat(d.TimeInS));

@@ -107,7 +107,7 @@ li {
 }
 
 #searchResults {
-  margin-top: 40px;
+  margin-top: 60px;
   max-height: 300px;
   overflow-y: auto; 
   border-radius: 4px;
@@ -124,3 +124,14 @@ li {
 .search-result-item:hover {
   background-color: #3392c2; 
 }
+
+#distanceSelection {
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+  margin-top: 5px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
