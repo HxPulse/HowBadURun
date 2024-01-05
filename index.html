@@ -93,27 +93,8 @@
       </div>
     </div>
     
-
-    <div class="selectors">
-      <div class="selectors-left">
-        <h3 style="text-align: center; margin-bottom: 5px;">Evolution of 
-          <span id="txtGender" style="font-weight: bold;"></span> 
-          <span id="txtDistance" style="font-weight: bold;"></span> 
-          over time
-        </h3>
-        <h4 style="margin-top: 0px;">hover for more info</h4>
-        <div id="scatterplot"></div> 
-      </div>
-      <div class="selectors-right">
-        <div id="runnerDisplay">Start by selecting a runner</div><br/>
-        <input type="text" id="runnerSearch" placeholder="Search Runner">
-        <div id="searchResults"></div>
-        <div id="runnerStats">
-          <select id="distanceSelection" style="display: none;"></select>
-          <br/>
-          <div id="performanceStats"></div>
-      </div>
-      </div>
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="index2.html"><button class="custom-btn"><span>Go to Page 2</span></button></a>
     </div>
 
     <script>
@@ -145,23 +126,6 @@
           }
         }
 
-        document.getElementById("runnerSearch").addEventListener("input", function(e) {
-          const searchQuery = e.target.value.toLowerCase();
-        
-          const uniqueNamesSet = new Set();
-        
-          const filteredRunners = data.filter(entry => {
-            const nameLower = entry.Name.toLowerCase();
-            if (nameLower.includes(searchQuery) && !uniqueNamesSet.has(nameLower)) {
-              uniqueNamesSet.add(nameLower);
-              return true;
-            }
-            return false;
-          });
-        
-          displaySearchResults(filteredRunners);
-        });
-  
        
         function updateResult() {
           // Données des différents selectors
