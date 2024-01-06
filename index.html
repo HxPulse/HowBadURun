@@ -92,28 +92,25 @@
         <div id="resultCountry"></div>
       </div>
     </div>
-    
 
-    <div class="selectors">
-      <div class="selectors-left">
-        <h3 style="text-align: center; margin-bottom: 5px;">Evolution of 
-          <span id="txtGender" style="font-weight: bold;"></span> 
-          <span id="txtDistance" style="font-weight: bold;"></span> 
-          over time
-        </h3>
-        <h4 style="margin-top: 0px;">hover for more info</h4>
-        <div id="scatterplot"></div> 
-      </div>
-      <div class="selectors-right">
-        <div id="runnerDisplay">Start by selecting a runner</div><br/>
-        <input type="text" id="runnerSearch" placeholder="Search Runner">
-        <div id="searchResults"></div>
-        <div id="runnerStats">
-          <select id="distanceSelection" style="display: none;"></select>
-          <br/>
-          <div id="performanceStats"></div>
-      </div>
-      </div>
+    <br/>
+    <div class="video">
+      <h3>The following video playback rate is proportional to the speed you selected</h3>
+      <h3 id="videoTitle"></h3>
+      <div>
+        <input type="radio" id="proVideo" name="videoSpeed" value="proVideo">
+        <label for="proVideo">Pro</label>
+        <input type="radio" id="averageVideo" name="videoSpeed" value="averageVideo" checked>
+        <label for="averageVideo">You</label>
+      </div><br/>
+      <video id="runningVid" autoplay muted loop>
+        <source src="video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="index2.html"><button class="custom-btn"><span>Go to Page 2</span></button></a>
     </div>
 
     <script>
@@ -145,29 +142,14 @@
           }
         }
 
-        document.getElementById("runnerSearch").addEventListener("input", function(e) {
-          const searchQuery = e.target.value.toLowerCase();
-        
-          const uniqueNamesSet = new Set();
-        
-          const filteredRunners = data.filter(entry => {
-            const nameLower = entry.Name.toLowerCase();
-            if (nameLower.includes(searchQuery) && !uniqueNamesSet.has(nameLower)) {
-              uniqueNamesSet.add(nameLower);
-              return true;
-            }
-            return false;
-          });
-        
-          displaySearchResults(filteredRunners);
-        });
-  
        
         function updateResult() {
           // Données des différents selectors
           const selectedGender = document.getElementById("genderSelector").value;
           const selectedDistance = document.getElementById("distanceSelector").value;
           const selectedTop = parseInt(document.getElementById("topSelector").value);
+          const performanceOptions = document.getElementById("performanceSelector");
+          const selectedPerformanceTitle = performanceOptions.options[performanceOptions.selectedIndex].text;
           const selectedPerformance = parseInt(document.getElementById("performanceSelector").value);
           const filteredData = filterData(selectedGender, selectedDistance, selectedTop, selectedPerformance);
           const selectedDistanceOptions = document.getElementById("distanceSelector");
@@ -218,6 +200,9 @@
           const runningSpeedPro = delayValue / parseFloat(filteredData[0].AvgSpeed);
           const spinningSpeedNormal = 1/normalPerformance.AvgSpeed * delayValue / 7000; // 1/normalPerformance.AvgSpeed * delayValue / X -> X augmente implique spinning plus rapide
           const spinningSpeedPro = 1/filteredData[0].AvgSpeed * delayValue / 7000;
+          const videoPro = filteredData[0].AvgSpeed / 3;
+          const videoNormal = normalPerformance.AvgSpeed / 3;
+          
           // Taille des tracks
           const svgWidth = window.innerWidth - 100;
           const svgHeight = 30;
@@ -227,7 +212,6 @@
           d3.select("#raceContainer").selectAll("svg").remove();
           d3.select("#raceContainer2").selectAll("svg").remove();
           
-
           // Track 1 et 2
           const svg = d3.select("#raceContainer")
             .append("svg")
@@ -270,11 +254,23 @@
             .duration(runningSpeedNormal)
             .attr("x", svgWidth - trackRacePadding);
         
-        updateIconSpeed(spinningSpeedNormal, spinningSpeedPro);
+          updateIconSpeed(spinningSpeedNormal, spinningSpeedPro);
 
-        d3.select("#txtGender").text(selectedGender);
-        d3.select("#txtDistance").text(selectedDistanceTitle);
-        createScatterplot(selectedGender, selectedDistance);
+          d3.select("#txtGender").text(selectedGender);
+          d3.select("#txtDistance").text(selectedDistanceTitle);
+
+          const initialSpeed = d3.select("#proVideo").property("checked") ? videoPro : videoNormal;
+          const videoText = d3.select("#videoTitle").html((d) => `Currently : ${filteredData[0].Name} - ${filteredData[0].AvgSpeed}m/s vs You (${selectedPerformanceTitle})`)
+          handleVideoSpeedChange(initialSpeed);
+
+          d3.select("#proVideo").on("change", function() {
+            handleVideoSpeedChange(videoPro);
+          });
+    
+          d3.select("#averageVideo").on("change", function() {
+            handleVideoSpeedChange(videoNormal);
+          });
+
         }
 
         function updateIconSpeed(speed1, speed2) {
@@ -330,26 +326,22 @@
           }
       }
       
-      
-      function displayPerformanceStats(runnerName, distance) {
-          const performanceStatsDiv = document.getElementById("performanceStats");
-          performanceStatsDiv.innerHTML = '';
-      
-          // Filter the data for the selected runner and distance
-          const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
-      
-          // Calculate average speed
-          const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
-          const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
-      
-          // Display stats
-          performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
-      }
-      
-      // Rest of your existing JavaScript code...
-      
-      
-      function displaySearchResults(runners) {
+        function displayPerformanceStats(runnerName, distance) {
+            const performanceStatsDiv = document.getElementById("performanceStats");
+            performanceStatsDiv.innerHTML = '';
+        
+            // Filter the data for the selected runner and distance
+            const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
+        
+            // Calculate average speed
+            const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
+            const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
+        
+            // Display stats
+            performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
+        }
+        
+        function displaySearchResults(runners) {
           const resultsDiv = document.getElementById("searchResults");
           const runnerDisplay = document.getElementById("runnerDisplay");
           resultsDiv.innerHTML = ''; 
@@ -367,97 +359,12 @@
               resultsDiv.appendChild(elem);
           });
       }
-      
-        
-      
-        function createScatterplot(selectedGender, selectedDistance) {
-          const filteredData = data.filter(
-            (d) => d.Gender === selectedGender &&
-              parseInt(d.Distance) === parseInt(selectedDistance)
-          );
-          
-          // On récupère les données par mois
-          const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y")(new Date(d.Date)));
-          // Et on récupère le meilleur temps par mois
-          const bestTimesData = Array.from(nestedData, ([key, values]) => {
-            const bestTime = d3.min(values, d => parseFloat(d.TimeInS));
-            const bestTimeEntry = values.find(d => parseFloat(d.TimeInS) === bestTime);
-            return {
-              Date: key,
-              BestTimeInS: bestTime,
-              BestTimeEntry: bestTimeEntry,
-            };
-          });
-        
-          const scatterplotDiv = d3.select("#scatterplot");
-          // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
-          scatterplotDiv.selectAll("svg").remove();
-          // Tailles du scatterplot
-          const margin = { top: 40, right: 20, bottom: 60, left: 60 }; 
-          const width = 800 - margin.left - margin.right; 
-          const height = 500 - margin.top - margin.bottom; 
 
-          // Scaling
-          const xScale = d3.scaleTime()
-            .domain(d3.extent(bestTimesData, d => new Date(d.Date)))
-            .range([0, width]);
-          const yScale = d3.scaleLinear()
-            .domain([d3.min(bestTimesData, d => d.BestTimeInS), d3.max(bestTimesData, d => d.BestTimeInS)])
-            .range([height, 0]);
-          const xAxis = d3.axisBottom(xScale);
-          const yAxis = d3.axisLeft(yScale);
-          const svg = scatterplotDiv.append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-          
-          // Tooltip
-          const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
-          // Sur les cercles
-          svg.selectAll("circle")
-            .data(bestTimesData)
-            .enter().append("circle")
-            .attr("cx", d => xScale(new Date(d.Date)))
-            .attr("cy", d => yScale(d.BestTimeInS))
-            .attr("r", 5)
-            .attr("fill", "#2978A0")
-            .on("mouseover", function (event, d) {
-              tooltip.transition()
-                .duration(150)
-                .style("opacity", .9)
-                .style("left", (event.pageX + 10) + "px")  
-                .style("top", (event.pageY - 18) + "px"); 
-        
-              tooltip.html(`${d.BestTimeEntry.Name}<br>${d.BestTimeEntry.TimeInS}s - ${d.BestTimeEntry.AvgSpeed}m/s [${d.BestTimeEntry.Date}]`);
-            })
-            .on("mouseout", function (d) {
-              tooltip.transition()
-                .duration(350)
-                .style("opacity", 0);
-          });
-
-          svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-          svg.append("g")
-            .call(yAxis);
-
-          // Labels sur les axes
-          svg.append("text")
-            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top) + ")") 
-            .style("text-anchor", "middle")
-            .text("Date");
-          svg.append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("x", 0 - (height / 2))
-            .style("text-anchor", "middle")
-            .text("Time (s)")
-            .attr("y", -40);
-        }
-        
+        function handleVideoSpeedChange(speed) {
+        d3.select("#runningVid").property("playbackRate", speed);
+      }
+    
+    
         // Initial update
         updateResult();
 

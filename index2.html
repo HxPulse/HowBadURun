@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap">
+        <link rel="icon" href="favicon.png" type="image/png">
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+
+  <body>
+    <img src="title.png" alt="Projet DataViz" id="mainTitleImage">
+    <h3>Let's face reality and compare yourself to the very best to witness how bad you are at running</h3>
+
+    <div class="selectors">
+      <div class="selectors-left">
+        <div class="selector-container">
+          <label for="genderSelector">Select Gender:</label>
+          <select id="genderSelector">
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+          </select>
+        </div>
+
+        <div class="selector-container">
+          <label for="distanceSelector">Distance:</label>
+          <select id="distanceSelector">
+            <option value="100">100m</option>
+            <option value="200">200m</option>
+            <option value="400">400m</option>
+            <option value="800">800m</option>
+            <option value="1500">1500m</option>
+            <option value="5000">5000m</option>
+            <option value="10000">10000m</option>
+            <option value="21098">Half Marathon (21km)</option>
+            <option value="42195">Marathon (42km)</option>
+          </select>
+        </div>
+      </div>
+      <div class="selectors-right">
+        <div id="runnerDisplay">You can also select a specific runner</div><br/>
+        <input type="text" id="runnerSearch" placeholder="Search Runner">
+        <div id="searchResults"></div>
+        <div id="runnerStats">
+          <select id="distanceSelection" style="display: none;"></select>
+          <br/>
+          <div id="performanceStats"></div>
+        </div>
+      </div>
+    </div>
+
+      <div class="selectors">
+        <div class="selectors-left">
+          <h3 style="text-align: center; margin-bottom: 5px;">Evolution of 
+            <span id="txtGender" style="font-weight: bold;"></span> 
+            <span id="txtDistance" style="font-weight: bold;"></span> 
+            over time
+          </h3>
+          <h4 style="margin-top: 0px;">hover for more info</h4>
+          <div id="scatterplot"></div> 
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="index.html"><button class="custom-btn"><span>Return to Page 1</span></button></a>
+      </div>
+  
+      <script>
+        // Load des données
+        Promise.all([
+          d3.csv("data.csv"),
+          d3.csv("normalPerformances.csv")
+        ]).then(function ([data, normalPerformances]) {
+  
+          // Filtrage sur les selectors
+          function filterData(gender, distance, top, performance) {
+            const filteredData = data.filter(
+              (d) => d.Gender === gender &&
+                parseInt(d.Distance) === parseInt(distance)
+            );
+            
+            // Filtrage sur la sélection de top
+            switch (top) {
+              case 1:
+                return filteredData.slice(0, 1);
+              case 10:
+                return filteredData.slice(9, 10);
+              case 100:
+                return filteredData.slice(99, 100);
+              case 1000:
+                return [filteredData[filteredData.length - 1]];
+              default:
+                return [];
+            }
+          }
+  
+          document.getElementById("runnerSearch").addEventListener("input", function(e) {
+            const searchQuery = e.target.value.toLowerCase();
+          
+            const uniqueNamesSet = new Set();
+          
+            const filteredRunners = data.filter(entry => {
+              const nameLower = entry.Name.toLowerCase();
+              if (nameLower.includes(searchQuery) && !uniqueNamesSet.has(nameLower)) {
+                uniqueNamesSet.add(nameLower);
+                return true;
+              }
+              return false;
+            });
+          
+            displaySearchResults(filteredRunners);
+          });
+    
+         
+          function updateResult() {
+            // Données des différents selectors
+            const selectedGender = document.getElementById("genderSelector").value;
+            const selectedDistance = document.getElementById("distanceSelector").value;
+            const selectedDistanceOptions = document.getElementById("distanceSelector");
+            const selectedDistanceTitle = selectedDistanceOptions.options[selectedDistanceOptions.selectedIndex].text;
+  
+            // Message "Your performance vs X"
+            const resultDiv = d3.select("#result");
+  
+          d3.select("#txtGender").text(selectedGender);
+          d3.select("#txtDistance").text(selectedDistanceTitle);
+          createScatterplot(selectedGender, selectedDistance);
+          }
+
+          
+          function displayRunnerStats(runnerName) {
+            const distanceSelection = document.getElementById("distanceSelection");
+            distanceSelection.innerHTML = '';
+            distanceSelection.style.display = 'block';
+        
+            // Filter the data for the selected runner
+            const runnerData = data.filter(entry => entry.Name === runnerName);
+        
+            // Get unique distances
+            const uniqueDistances = Array.from(new Set(runnerData.map(entry => entry.Distance)));
+        
+            // Populate the distance select box
+            uniqueDistances.forEach(distance => {
+                const option = document.createElement('option');
+                option.value = distance;
+                option.textContent = distance + 'm';
+                distanceSelection.appendChild(option);
+            });
+        
+            // If only one distance, display stats immediately
+            if (uniqueDistances.length === 1) {
+                displayPerformanceStats(runnerName, uniqueDistances[0]);
+            } else {
+                distanceSelection.onchange = () => displayPerformanceStats(runnerName, distanceSelection.value);
+            }
+        }
+        
+        
+        function displayPerformanceStats(runnerName, distance) {
+            const performanceStatsDiv = document.getElementById("performanceStats");
+            performanceStatsDiv.innerHTML = '';
+        
+            // Filter the data for the selected runner and distance
+            const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
+        
+            // Calculate average speed
+            const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
+            const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
+        
+            // Display stats
+            performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
+        }
+
+        
+        function displaySearchResults(runners) {
+            const resultsDiv = document.getElementById("searchResults");
+            const runnerDisplay = document.getElementById("runnerDisplay");
+            resultsDiv.innerHTML = ''; 
+        
+            runners.forEach(runner => {
+                const elem = document.createElement("div");
+                elem.textContent = runner.Name;
+                elem.classList.add('search-result-item');
+                elem.onclick = function() {
+                    document.getElementById("runnerSearch").value = runner.Name;
+                    runnerDisplay.innerHTML = `Selected Runner: ${runner.Name}`;
+                    resultsDiv.innerHTML = "";
+                    displayRunnerStats(runner.Name);
+                };
+                resultsDiv.appendChild(elem);
+            });
+        }
+        
+          
+        
+          function createScatterplot(selectedGender, selectedDistance) {
+            const filteredData = data.filter(
+              (d) => d.Gender === selectedGender &&
+                parseInt(d.Distance) === parseInt(selectedDistance)
+            );
+            
+            // On récupère les données par mois
+            const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y")(new Date(d.Date)));
+            // Et on récupère le meilleur temps par mois
+            const bestTimesData = Array.from(nestedData, ([key, values]) => {
+              const bestTime = d3.min(values, d => parseFloat(d.TimeInS));
+              const bestTimeEntry = values.find(d => parseFloat(d.TimeInS) === bestTime);
+              return {
+                Date: key,
+                BestTimeInS: bestTime,
+                BestTimeEntry: bestTimeEntry,
+              };
+            });
+          
+            const scatterplotDiv = d3.select("#scatterplot");
+            // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
+            scatterplotDiv.selectAll("svg").remove();
+            // Tailles du scatterplot
+            const margin = { top: 40, right: 20, bottom: 60, left: 60 }; 
+            const width = 800 - margin.left - margin.right; 
+            const height = 500 - margin.top - margin.bottom; 
+  
+            // Scaling
+            const xScale = d3.scaleTime()
+              .domain(d3.extent(bestTimesData, d => new Date(d.Date)))
+              .range([0, width]);
+            const yScale = d3.scaleLinear()
+              .domain([d3.min(bestTimesData, d => d.BestTimeInS), d3.max(bestTimesData, d => d.BestTimeInS)])
+              .range([height, 0]);
+            const xAxis = d3.axisBottom(xScale);
+            const yAxis = d3.axisLeft(yScale);
+            const svg = scatterplotDiv.append("svg")
+              .attr("width", width + margin.left + margin.right)
+              .attr("height", height + margin.top + margin.bottom)
+              .append("g")
+              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            
+            // Tooltip
+            const tooltip = d3.select("body").append("div")
+              .attr("class", "tooltip")
+              .style("opacity", 0);
+            // Sur les cercles
+            svg.selectAll("circle")
+              .data(bestTimesData)
+              .enter().append("circle")
+              .attr("cx", d => xScale(new Date(d.Date)))
+              .attr("cy", d => yScale(d.BestTimeInS))
+              .attr("r", 5)
+              .attr("fill", "#2978A0")
+              .on("mouseover", function (event, d) {
+                tooltip.transition()
+                  .duration(150)
+                  .style("opacity", .9)
+                  .style("left", (event.pageX + 10) + "px")  
+                  .style("top", (event.pageY - 18) + "px"); 
+          
+                tooltip.html(`${d.BestTimeEntry.Name}<br>${d.BestTimeEntry.TimeInS}s - ${d.BestTimeEntry.AvgSpeed}m/s [${d.BestTimeEntry.Date}]`);
+              })
+              .on("mouseout", function (d) {
+                tooltip.transition()
+                  .duration(350)
+                  .style("opacity", 0);
+            });
+  
+            svg.append("g")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);
+            svg.append("g")
+              .call(yAxis);
+  
+            // Labels sur les axes
+            svg.append("text")
+              .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top) + ")") 
+              .style("text-anchor", "middle")
+              .text("Date");
+            svg.append("text")
+              .attr("transform", "rotate(-90)")
+              .attr("x", 0 - (height / 2))
+              .style("text-anchor", "middle")
+              .text("Time (s)")
+              .attr("y", -40);
+          }
+          
+          // Initial update
+          updateResult();
+  
+          // Event listeners
+          d3.select("#genderSelector").on("change", updateResult);
+          d3.select("#distanceSelector").on("change", updateResult);
+        });
+      </script>
+  </body>
+</html>
