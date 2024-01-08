@@ -59,6 +59,9 @@
           <h4 style="margin-top: 0px;">hover for more info</h4>
           <div id="scatterplot"></div> 
         </div>
+        <div class="selectors-right">
+          <div id="specificRunnerPlot"></div>
+        </div>
       </div>
 
       <div style="text-align: center; margin-top: 20px;">
@@ -109,8 +112,15 @@
             });
           
             displaySearchResults(filteredRunners);
+            const selectedRunnerDistance = parseInt(document.getElementById("distanceSelection").value);
+            updateSpecificRunnerPlot(searchQuery, selectedRunnerDistance);
           });
-    
+          
+          document.getElementById("distanceSelection").addEventListener("change", function() {
+            const selectedRunner = document.getElementById("runnerSearch").value;
+            const selectedRunnerDistance = parseInt(this.value);
+            updateSpecificRunnerPlot(selectedRunner, selectedRunnerDistance);
+          });
          
           function updateResult() {
             // Données des différents selectors
@@ -118,172 +128,225 @@
             const selectedDistance = document.getElementById("distanceSelector").value;
             const selectedDistanceOptions = document.getElementById("distanceSelector");
             const selectedDistanceTitle = selectedDistanceOptions.options[selectedDistanceOptions.selectedIndex].text;
-  
+
             // Message "Your performance vs X"
             const resultDiv = d3.select("#result");
-  
-          d3.select("#txtGender").text(selectedGender);
-          d3.select("#txtDistance").text(selectedDistanceTitle);
-          createScatterplot(selectedGender, selectedDistance);
-          }
 
-          
+            d3.select("#txtGender").text(selectedGender);
+            d3.select("#txtDistance").text(selectedDistanceTitle);
+            createScatterplot(selectedGender, selectedDistance);
+            
+            const selectedRunner = document.getElementById("runnerSearch").value;
+            let selectedRunnerDistance = parseInt(document.getElementById("distanceSelection").value);
+
+            selectedRunnerDistance = parseInt(selectedDistance);
+            updateSpecificRunnerPlot(selectedRunner, selectedRunnerDistance);
+          }
+        
           function displayRunnerStats(runnerName) {
             const distanceSelection = document.getElementById("distanceSelection");
             distanceSelection.innerHTML = '';
             distanceSelection.style.display = 'block';
-        
-            // Filter the data for the selected runner
+          
             const runnerData = data.filter(entry => entry.Name === runnerName);
-        
-            // Get unique distances
             const uniqueDistances = Array.from(new Set(runnerData.map(entry => entry.Distance)));
-        
-            // Populate the distance select box
-            uniqueDistances.forEach(distance => {
-                const option = document.createElement('option');
-                option.value = distance;
-                option.textContent = distance + 'm';
-                distanceSelection.appendChild(option);
-            });
-        
-            // If only one distance, display stats immediately
-            if (uniqueDistances.length === 1) {
-                displayPerformanceStats(runnerName, uniqueDistances[0]);
-            } else {
-                distanceSelection.onchange = () => displayPerformanceStats(runnerName, distanceSelection.value);
-            }
-        }
-        
-        
-        function displayPerformanceStats(runnerName, distance) {
-            const performanceStatsDiv = document.getElementById("performanceStats");
-            performanceStatsDiv.innerHTML = '';
-        
-            // Filter the data for the selected runner and distance
-            const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
-        
-            // Calculate average speed
-            const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
-            const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
-        
-            // Display stats
-            performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
-        }
 
-        
-        function displaySearchResults(runners) {
-            const resultsDiv = document.getElementById("searchResults");
-            const runnerDisplay = document.getElementById("runnerDisplay");
-            resultsDiv.innerHTML = ''; 
-        
-            runners.forEach(runner => {
-                const elem = document.createElement("div");
-                elem.textContent = runner.Name;
-                elem.classList.add('search-result-item');
-                elem.onclick = function() {
-                    document.getElementById("runnerSearch").value = runner.Name;
-                    runnerDisplay.innerHTML = `Selected Runner: ${runner.Name}`;
-                    resultsDiv.innerHTML = "";
-                    displayRunnerStats(runner.Name);
-                };
-                resultsDiv.appendChild(elem);
-            });
-        }
-        
-          
-        
-          function createScatterplot(selectedGender, selectedDistance) {
-            const filteredData = data.filter(
-              (d) => d.Gender === selectedGender &&
-                parseInt(d.Distance) === parseInt(selectedDistance)
-            );
-            
-            // On récupère les données par mois
-            const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y")(new Date(d.Date)));
-            // Et on récupère le meilleur temps par mois
-            const bestTimesData = Array.from(nestedData, ([key, values]) => {
-              const bestTime = d3.min(values, d => parseFloat(d.TimeInS));
-              const bestTimeEntry = values.find(d => parseFloat(d.TimeInS) === bestTime);
-              return {
-                Date: key,
-                BestTimeInS: bestTime,
-                BestTimeEntry: bestTimeEntry,
-              };
+            uniqueDistances.forEach(distance => {
+              const option = document.createElement('option');
+              option.value = distance;
+              option.textContent = distance + 'm';
+              distanceSelection.appendChild(option);
             });
           
-            const scatterplotDiv = d3.select("#scatterplot");
-            // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
-            scatterplotDiv.selectAll("svg").remove();
-            // Tailles du scatterplot
-            const margin = { top: 40, right: 20, bottom: 60, left: 60 }; 
-            const width = 800 - margin.left - margin.right; 
-            const height = 500 - margin.top - margin.bottom; 
+            if (uniqueDistances.length === 1) {
+              displayPerformanceStats(runnerName, uniqueDistances[0]);
+            } else {
+              distanceSelection.onchange = () => displayPerformanceStats(runnerName, distanceSelection.value);
+            }
   
-            // Scaling
-            const xScale = d3.scaleTime()
-              .domain(d3.extent(bestTimesData, d => new Date(d.Date)))
-              .range([0, width]);
-            const yScale = d3.scaleLinear()
-              .domain([d3.min(bestTimesData, d => d.BestTimeInS), d3.max(bestTimesData, d => d.BestTimeInS)])
-              .range([height, 0]);
-            const xAxis = d3.axisBottom(xScale);
-            const yAxis = d3.axisLeft(yScale);
-            const svg = scatterplotDiv.append("svg")
-              .attr("width", width + margin.left + margin.right)
-              .attr("height", height + margin.top + margin.bottom)
-              .append("g")
-              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            
-            // Tooltip
-            const tooltip = d3.select("body").append("div")
-              .attr("class", "tooltip")
-              .style("opacity", 0);
-            // Sur les cercles
-            svg.selectAll("circle")
-              .data(bestTimesData)
-              .enter().append("circle")
-              .attr("cx", d => xScale(new Date(d.Date)))
-              .attr("cy", d => yScale(d.BestTimeInS))
-              .attr("r", 5)
-              .attr("fill", "#2978A0")
-              .on("mouseover", function (event, d) {
-                tooltip.transition()
-                  .duration(150)
-                  .style("opacity", .9)
-                  .style("left", (event.pageX + 10) + "px")  
-                  .style("top", (event.pageY - 18) + "px"); 
-          
-                tooltip.html(`${d.BestTimeEntry.Name}<br>${d.BestTimeEntry.TimeInS}s - ${d.BestTimeEntry.AvgSpeed}m/s [${d.BestTimeEntry.Date}]`);
-              })
-              .on("mouseout", function (d) {
-                tooltip.transition()
-                  .duration(350)
-                  .style("opacity", 0);
-            });
-  
-            svg.append("g")
-              .attr("transform", "translate(0," + height + ")")
-              .call(xAxis);
-            svg.append("g")
-              .call(yAxis);
-  
-            // Labels sur les axes
-            svg.append("text")
-              .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top) + ")") 
-              .style("text-anchor", "middle")
-              .text("Date");
-            svg.append("text")
-              .attr("transform", "rotate(-90)")
-              .attr("x", 0 - (height / 2))
-              .style("text-anchor", "middle")
-              .text("Time (s)")
-              .attr("y", -40);
+            const firstDistance = parseInt(uniqueDistances[0]);
+            updateSpecificRunnerPlot(runnerName, firstDistance);
           }
           
+          function displayPerformanceStats(runnerName, distance) {
+              const performanceStatsDiv = document.getElementById("performanceStats");
+              performanceStatsDiv.innerHTML = '';
+          
+              // Filter the data for the selected runner and distance
+              const runnerPerformance = data.filter(entry => entry.Name === runnerName && entry.Distance === distance);
+          
+              // Calculate average speed
+              const avgSpeeds = runnerPerformance.map(entry => parseFloat(entry.AvgSpeed));
+              const avgSpeed = (avgSpeeds.reduce((a, b) => a + b, 0) / avgSpeeds.length).toFixed(2);
+          
+              // Display stats
+              performanceStatsDiv.innerHTML = `Average Speed for ${distance}m: ${avgSpeed} m/s`;
+          }
+
+          function displaySearchResults(runners) {
+              const resultsDiv = document.getElementById("searchResults");
+              const runnerDisplay = document.getElementById("runnerDisplay");
+              resultsDiv.innerHTML = ''; 
+          
+              runners.forEach(runner => {
+                  const elem = document.createElement("div");
+                  elem.textContent = runner.Name;
+                  elem.classList.add('search-result-item');
+                  elem.onclick = function() {
+                      document.getElementById("runnerSearch").value = runner.Name;
+                      runnerDisplay.innerHTML = `Selected Runner: ${runner.Name}`;
+                      resultsDiv.innerHTML = "";
+                      displayRunnerStats(runner.Name);
+                  };
+                  resultsDiv.appendChild(elem);
+              });
+          }
+
+          function updateSpecificRunnerPlot(runnerName, distance) {
+            // Filtrer les données pour le runner et la distance spécifiques
+            const runnerData = data.filter(d => d.Name === runnerName && parseInt(d.Distance) === distance);
+          
+            // Préparer les données pour le scatterplot
+            const timesData = runnerData.map(d => ({
+              date: new Date(d.Date), 
+              timeInS: parseFloat(d.TimeInS) 
+            }));
+          
+            // Créer le scatterplot
+            createRunnerScatterplot(timesData);
+          }
+          
+          function createRunnerScatterplot(data) {
+            // Supprimer le scatterplot précédent s'il existe
+            d3.select("#specificRunnerPlot").selectAll("*").remove();
+          
+            // Configuration de base pour le scatterplot...
+            const margin = { top: 40, right: 20, bottom: 30, left: 50 },
+                  width = 600 - margin.left - margin.right,
+                  height = 400 - margin.top - margin.bottom;
+          
+            // Créer un SVG
+            const svg = d3.select("#specificRunnerPlot").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+              .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          
+            const xScale = d3.scaleTime().range([0, width]),
+            yScale = d3.scaleLinear().range([height, 0]);
+            const minY = d3.min(data, d => d.timeInS);
+            const maxY = d3.max(data, d => d.timeInS);
+            yScale.domain([minY, maxY]);
+            xScale.domain(d3.extent(data, d => d.date));
+          
+            svg.append("g")
+              .attr("transform", "translate(0," + height + ")")
+              .call(d3.axisBottom(xScale));
+          
+            svg.append("g")
+              .call(d3.axisLeft(yScale));
+          
+            // Ajouter les points
+            svg.selectAll("dot")
+              .data(data)
+              .enter().append("circle")
+                .attr("r", 5)
+                .attr("cx", d => xScale(d.date))
+                .attr("cy", d => yScale(d.timeInS))
+                .attr("fill", "#2978A0");
+          }
+          
+          function createScatterplot(selectedGender, selectedDistance) {
+          const filteredData = data.filter(
+            (d) => d.Gender === selectedGender &&
+              parseInt(d.Distance) === parseInt(selectedDistance)
+          );
+          
+          // On récupère les données par mois
+          const nestedData = d3.group(filteredData, d => d3.timeFormat("%Y")(new Date(d.Date)));
+          // Et on récupère le meilleur temps par mois
+          const bestTimesData = Array.from(nestedData, ([key, values]) => {
+            const bestTime = d3.min(values, d => parseFloat(d.TimeInS));
+            const bestTimeEntry = values.find(d => parseFloat(d.TimeInS) === bestTime);
+            return {
+              Date: key,
+              BestTimeInS: bestTime,
+              BestTimeEntry: bestTimeEntry,
+            };
+          });
+        
+          const scatterplotDiv = d3.select("#scatterplot");
+          // Suppression de l'élément à chaque mise à jour pour éviter de dupliquer à l'infini
+          scatterplotDiv.selectAll("svg").remove();
+          // Tailles du scatterplot
+          const margin = { top: 40, right: 20, bottom: 60, left: 60 }; 
+          const width = 800 - margin.left - margin.right; 
+          const height = 500 - margin.top - margin.bottom; 
+
+          // Scaling
+          const xScale = d3.scaleTime()
+            .domain(d3.extent(bestTimesData, d => new Date(d.Date)))
+            .range([0, width]);
+          const yScale = d3.scaleLinear()
+            .domain([d3.min(bestTimesData, d => d.BestTimeInS), d3.max(bestTimesData, d => d.BestTimeInS)])
+            .range([height, 0]);
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+          const svg = scatterplotDiv.append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          
+          // Tooltip
+          const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+          // Sur les cercles
+          svg.selectAll("circle")
+            .data(bestTimesData)
+            .enter().append("circle")
+            .attr("cx", d => xScale(new Date(d.Date)))
+            .attr("cy", d => yScale(d.BestTimeInS))
+            .attr("r", 5)
+            .attr("fill", "#2978A0")
+            .on("mouseover", function (event, d) {
+              tooltip.transition()
+                .duration(150)
+                .style("opacity", .9)
+                .style("left", (event.pageX + 10) + "px")  
+                .style("top", (event.pageY - 18) + "px"); 
+        
+              tooltip.html(`${d.BestTimeEntry.Name}<br>${d.BestTimeEntry.TimeInS}s - ${d.BestTimeEntry.AvgSpeed}m/s [${d.BestTimeEntry.Date}]`);
+            })
+            .on("mouseout", function (d) {
+              tooltip.transition()
+                .duration(350)
+                .style("opacity", 0);
+          });
+
+          svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+          svg.append("g")
+            .call(yAxis);
+
+          // Labels sur les axes
+          svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.top) + ")") 
+            .style("text-anchor", "middle")
+            .text("Date");
+          svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", 0 - (height / 2))
+            .style("text-anchor", "middle")
+            .text("Time (s)")
+            .attr("y", -40);
+        }
+        
           // Initial update
           updateResult();
-  
+
           // Event listeners
           d3.select("#genderSelector").on("change", updateResult);
           d3.select("#distanceSelector").on("change", updateResult);
