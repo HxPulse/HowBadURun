@@ -16,6 +16,10 @@ body {
   margin: 10px;
 }
 
+.icon1, .icon2 {
+  transition-timing-function: linear;
+}
+
 .selectors {
   display: grid;
   grid-template-columns: 1fr 1fr; 
