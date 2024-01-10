@@ -220,7 +220,7 @@
             // Supprimer le scatterplot précédent s'il existe
             d3.select("#specificRunnerPlot").selectAll("*").remove();
           
-            // Configuration de base pour le scatterplot...
+            // Configuration de base pour le scatterplot
             const margin = { top: 40, right: 20, bottom: 30, left: 50 },
                   width = 600 - margin.left - margin.right,
                   height = 400 - margin.top - margin.bottom;
@@ -233,7 +233,7 @@
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
           
             const xScale = d3.scaleTime().range([0, width]),
-            yScale = d3.scaleLinear().range([height, 0]);
+                yScale = d3.scaleLinear().range([height, 0]);
             const minY = d3.min(data, d => d.timeInS);
             const maxY = d3.max(data, d => d.timeInS);
             yScale.domain([minY, maxY]);
@@ -246,15 +246,39 @@
             svg.append("g")
               .call(d3.axisLeft(yScale));
           
-            // Ajouter les points
+            // Formater la date en DD/MM/YYYY
+            const formatDate = d3.timeFormat("%d/%m/%Y");
+          
+            // Tooltip pour le scatterplot spécifique au runner
+            const tooltip = d3.select("body").append("div")
+              .attr("class", "tooltip")
+              .style("opacity", 0);
+          
+            // Ajouter les points avec tooltips
             svg.selectAll("dot")
               .data(data)
               .enter().append("circle")
                 .attr("r", 5)
                 .attr("cx", d => xScale(d.date))
                 .attr("cy", d => yScale(d.timeInS))
-                .attr("fill", "#2978A0");
+                .attr("fill", "#2978A0")
+                .on("mouseover", function (event, d) {
+                  tooltip.transition()
+                    .duration(150)
+                    .style("opacity", .9)
+                    .style("left", (event.pageX + 10) + "px")  
+                    .style("top", (event.pageY - 18) + "px"); 
+          
+                  tooltip.html(`Date: ${formatDate(d.date)}<br>Time: ${d.timeInS}s`);
+                })
+                .on("mouseout", function () {
+                  tooltip.transition()
+                    .duration(350)
+                    .style("opacity", 0);
+                });
           }
+          
+          
           
           function createScatterplot(selectedGender, selectedDistance) {
           const filteredData = data.filter(
