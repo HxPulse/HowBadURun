@@ -347,7 +347,15 @@
               tooltip.transition()
                 .duration(350)
                 .style("opacity", 0);
-          });
+            })
+            .on("click", function (event, d) {
+              // Mettre à jour le scatterplot pour le runner spécifique
+              updateSpecificRunnerPlot(d.BestTimeEntry.Name, d.BestTimeEntry.Distance);
+              // Mettre à jour les éléments d'interface utilisateur si nécessaire
+              document.getElementById("runnerSearch").value = d.BestTimeEntry.Name;
+              // Appel pour mettre à jour les stats du runner
+              displayRunnerStats(d.BestTimeEntry.Name);
+            });
 
           svg.append("g")
             .attr("transform", "translate(0," + height + ")")
