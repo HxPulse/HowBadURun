@@ -31,14 +31,18 @@ body {
 }
 
 .video {
-  grid-column: 1 / -1; 
+  grid-column: 1; 
   display: flex;
   flex-direction: column;
   align-items: center;
   border: 2px solid #2978A0;
-  width: 60%;
+  width: 90%;
   padding: 5px;
-  padding-bottom: 10px;
+  padding-bottom: 90px;
+}
+
+#runningVid {
+  width: 85%;
 }
 
 .selectors-left, .selectors-right {
