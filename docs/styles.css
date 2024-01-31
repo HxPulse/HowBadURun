@@ -45,7 +45,7 @@ body {
   width: 85%;
 }
 
-.selectors-left, .selectors-right {
+.selectors-left, .selectors-right, .selector-mid {
   display: flex;
   flex-direction: column;
   align-items: center; 
