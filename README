@@ -1,11 +1,23 @@
-========== ENG =========
-To start the project : 
-Clone the repository.
-Start the start_server.bat by double clicking it.
-Search http://localhost:8000/projet/ in your web browser.
+You may find the project running at : https://hxpulsefire.github.io/HowBadURun/
 
-========== FR ==========
-Pour lancer le projet : 
-Clone le projet sur voter machine.
-Lancer le start_server.bat en double cliquant dessus.
-Rechercher http://localhost:8000/projet/ dans votre navigateur.
+Datasets :
+Professional performances : kaggle.com/datasets/jguerreiro/running
+Dataset of the world's best athletic performances from 1970 to 2022 over distances ranging from 100m to marathon, men's and women's categories.
+Average performances : own source
+
+Most people tend to misunderstand or underestimate the humongous gap there is between the performances of the best sportsmen in the world to the average one.
+Being familiar with the running competitive scenery, I will here use several various ways to represent this gap.
+Being a big fan of running and competition, I was very interested in my own performances, but especially those of the world's best. 
+
+The aim of this project is to highlight this gap via visualization methods that don't use direct figures, but rather more playful and visual means. 
+Furthermore, we will also take the opportunity to compare the best runners with each other, and look at the evolution of human performance.
+The main objective, is to make the elitism of the world's best understandable to a public who don't necessarily realize how good they are.
+
+You will here be able to :
+- Visualize the performance of an average runner and an elite runner (in different ways).
+- Visualize the differences in performance between the average and the elite (in different ways).
+- Visualize the evolution of the world's best performances over time.
+
+Technologies used : HTML, CSS, JS (D3)
+Next page button found at codepen.io
+Running video found at youtube.com/@virtualrunningvideos12 (youtube.com/watch?v=DQBCdbV2Enc)
