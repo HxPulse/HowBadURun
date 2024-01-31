@@ -69,12 +69,7 @@
     <h2>Explore other ways to visualize the gap to the Elite</h2>
     <div class="selectors">
       <div class="selectors-left">
-        <h3>These gears reflect the relative pace: the faster the spin, the quicker you run.</h3>
-        <h3 style="margin-top: 0px;">Compare your performance speed (left) to a professional's (right)</h3>
-        <div id="speedIcons">
-          <img id="icon1" src="gear.png" alt="Speed Icon 1">
-          <img id="icon2" src="gear.png" alt="Speed Icon 2">
-        </div>
+        
       </div>
       <div class="selectors-right">
         <h3>What would it be on a (very) long run ?</h3>
@@ -96,18 +91,22 @@
     <br/>
     <div class="video">
       <h3>The following video playback rate is proportional to the speed you selected</h3>
-      <h3 id="videoTitle"></h3>
-      <div>
-        <input type="radio" id="proVideo" name="videoSpeed" value="proVideo">
-        <label for="proVideo">Pro</label>
-        <input type="radio" id="averageVideo" name="videoSpeed" value="averageVideo" checked>
-        <label for="averageVideo">You</label>
-      </div><br/>
+      <div id="speedIcons" style="cursor: pointer;">
+        <div class="gear-container">
+            <img id="icon1" src="gear.png" alt="Speed Icon 1" class="gear-video-control" data-speed="averageVideo">
+            <p id="textYou"></p>
+        </div>
+        <div class="gear-container">
+            <img id="icon2" src="gear.png" alt="Speed Icon 2" class="gear-video-control" data-speed="proVideo">
+            <p id="textPro"></p>
+        </div>
+    </div><br/>
       <video id="runningVid" autoplay muted loop>
         <source src="video.mp4" type="video/mp4">
         Your browser does not support the video tag.
       </video>
     </div>
+    
     
     <div style="text-align: center; margin-top: 20px;">
       <a href="index2.html"><button class="custom-btn"><span>Go to Page 2</span></button></a>
@@ -141,8 +140,7 @@
               return [];
           }
         }
-
-       
+      
         function updateResult() {
           // Données des différents selectors
           const selectedGender = document.getElementById("genderSelector").value;
@@ -258,19 +256,53 @@
 
           d3.select("#txtGender").text(selectedGender);
           d3.select("#txtDistance").text(selectedDistanceTitle);
+          d3.select("#textYou").text(`You (${selectedPerformanceTitle}) - ${normalPerformance.AvgSpeed}m/s for ${selectedDistanceTitle}`);
+          d3.select("#textPro").text(`${filteredData[0].Name} - ${filteredData[0].AvgSpeed}m/s for ${selectedDistanceTitle}`);
 
-          const initialSpeed = d3.select("#proVideo").property("checked") ? videoPro : videoNormal;
-          const videoText = d3.select("#videoTitle").html((d) => `Currently : ${filteredData[0].Name} - ${filteredData[0].AvgSpeed}m/s vs You (${selectedPerformanceTitle})`)
-          handleVideoSpeedChange(initialSpeed);
+          handleVideoSpeedChange(videoNormal);
+          updateSelection();
+          document.querySelectorAll('.gear-video-control').forEach(gear => {
+            gear.addEventListener('click', function() {
+              const speedType = this.getAttribute('data-speed');
+              let speed = 1; 
+              
+              if(speedType === 'proVideo') {
+                speed = videoPro; 
+              } else if(speedType === 'averageVideo') {
+                speed = videoNormal; 
+              }
 
-          d3.select("#proVideo").on("change", function() {
-            handleVideoSpeedChange(videoPro);
+              handleVideoSpeedChange(speed);
+            });
           });
-    
-          d3.select("#averageVideo").on("change", function() {
-            handleVideoSpeedChange(videoNormal);
-          });
+        }
 
+        function handleVideoSpeedChange(speed) {
+          const video = document.getElementById("runningVid");
+          video.playbackRate = speed;
+        }
+
+        function updateSelection() {
+          const defaultSelectedGear = document.querySelector('.gear-video-control[data-speed="averageVideo"]');
+          selectGear(defaultSelectedGear);
+        
+          // Add click event listeners to gears for selection
+          document.querySelectorAll('.gear-video-control').forEach(gear => {
+            gear.addEventListener('click', function() {
+              selectGear(this);
+              const speedType = this.getAttribute('data-speed');
+              const speed = speedType === 'proVideo' ? videoPro : videoNormal;
+              handleVideoSpeedChange(speed);
+            });
+          });
+        }
+        
+        function selectGear(selectedGear) {
+          document.querySelectorAll('.gear-container').forEach(container => {
+            container.classList.remove('selected');
+          });
+        
+          selectedGear.parentElement.classList.add('selected');
         }
 
         function updateIconSpeed(speed1, speed2) {
