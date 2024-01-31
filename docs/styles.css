@@ -69,15 +69,34 @@ body {
   animation-name: spin;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  width: 60px; /* Adjust width as needed */
   height: 60px;
 }
 
 #speedIcons {
   display: flex;
-  justify-content: center;
-  margin: 30px;
-  gap: 30px;
+  justify-content: center; 
+  align-items: center; 
+  width: 90%; 
+  margin-top: 20px; 
+  gap: 200px;
+}
+
+.gear-container.selected {
+  border: 2px solid #2978A0; /* Adjust color as needed */
+  border-radius: 10px; /* Optional, for rounded corners */
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2); /* Optional, for added effect */
+  transition: all 0.3s ease; /* Smooth transition for selection change */
+}
+
+
+.gear-container {
+  text-align: center; 
+}
+
+.gear-container img {
+  margin: 0 auto;
+  display: block; 
 }
 
 .tooltip {
